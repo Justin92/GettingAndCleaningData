@@ -1,6 +1,16 @@
 ##Coursera Project Getting and Cleaning Data
 
-##First step is to bring in both the 
+library(stringr)
+library(dplyr)
+library(dtplyr)
+
+
+
+
+##First step is to bring in both the data sets: Training Set and the Test Set
+
+
+##TRAINING SET
 
 TrainingLabels <- read.table(
   "C:/Users/jmcketney.AD/Downloads/getdata%2Fprojectfiles%2FUCI HAR Dataset/UCI HAR Dataset/train/y_train.txt", 
@@ -10,9 +20,8 @@ TrainingSet <- read.table(
   "C:/Users/jmcketney.AD/Downloads/getdata%2Fprojectfiles%2FUCI HAR Dataset/UCI HAR Dataset/train/X_train.txt",
   header = F, stringsAsFactors = F)
 
-##I think that we might want to read these tables in with different reader function
 
-TrainingDataFrame <- cbind(rep("Train", 7352), TrainingLabels, TrainingSet)
+##TEST SET
 
 TestLabels <- read.table(
   "C:/Users/jmcketney.AD/Downloads/getdata%2Fprojectfiles%2FUCI HAR Dataset/UCI HAR Dataset/test/y_test.txt", 
@@ -22,18 +31,27 @@ TestSet <- read.table(
   "C:/Users/jmcketney.AD/Downloads/getdata%2Fprojectfiles%2FUCI HAR Dataset/UCI HAR Dataset/test/X_test.txt",
   header = F, stringsAsFactors = F)
 
+
+#Label indicating the group from which the data came using the addition of a new column "Group"
+
+
+TrainingDataFrame <- cbind(rep("Train", 7352), TrainingLabels, TrainingSet)
 TestDataFrame <- cbind((rep("Test", 2947)), TestLabels, TestSet)
 
 colnames(TestDataFrame) <- c("Group", colnames(TestDataFrame[2:563]))
 colnames(TrainingDataFrame) <- c("Group", colnames(TrainingDataFrame[2:563]))
 
-
+#Combine the datasets using rbind
 CombinedData <- rbind(TestDataFrame, TrainingDataFrame)
 
+
+
+##Loading in the feature labels for the 561 element vector
+setwd("C:/Users/jmcketney.AD/Downloads/getdata%2Fprojectfiles%2FUCI HAR Dataset/UCI HAR Dataset/")
 FeatureLabels <- read.table("features.txt", header = F, stringsAsFactors = F)
 
-colnames(CombinedData) <- c("Group", "Activity", FeatureLabels[,2])
 
+colnames(CombinedData) <- c("Group", "Activity", FeatureLabels[,2])
 TrainSubjectLabels <- read.table("train/subject_train.txt", header = F)
 
 TestSubjectLabels <- read.table("test/subject_test.txt", header = F)
@@ -74,49 +92,15 @@ NewColumns <- gsub("-mean\\(\\)", "Mean", NewColumns)
 NewColumns <- gsub("-std\\(\\)", "Standard Deviation", NewColumns)
 
 colnames(SelCombinedData) <- NewColumns
-##Buffer zone
 
 
 
+#SelCombinedData is a dataframe that contains the values of the standard deviation and means for all of the variables collected in the 561 metric
+##vector
 
+SelCombinedData_tbl <- tbl_df(SelCombinedData)
 
+GroupedMeans <- SelCombindedData_tbl %>% group_by(Subject, Activity) %>% summarize_at(.funs = mean, .vars = 4:82)
 
+##GroupedMeans variable holds the means of all the variables from SelCombinedData but grouped by both subject and activity
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-##Bunch of dumb unecessary shit now
-DataVector <- str_extract_all(TrainingSet[1,1], "(-)?[0-9]+\\.[0-9]+e(-)?[0-9]*")
-TrainingSet_df <- data.frame()
-
-for(i in 1:nrow(TrainingSet)){
-  
-  TempDataVector <- str_extract_all(TrainingSet[i,1], "(-)?[0-9]+\\.[0-9]+e")
-  ExpandedDataFrame <- rbind(ExpandedDataFrame, TempDataVector)
-}
