@@ -1,0 +1,94 @@
+---
+title: "Project one"
+output: html_document
+---
+
+### Reading in the file
+
+```{r setup, include=FALSE}
+StepInfo <- read.csv("/Users/justinmcketney/Downloads/activity.csv")
+```
+
+### Histogram
+
+```{r histogram}
+library(tidyr)
+library(dplyr)
+
+daysteps <- group_by(StepInfo, date) %>% summarise(steps = sum(steps))
+daysteps <- daysteps[complete.cases(daysteps), ]
+barplot(height = daysteps$steps, names = daysteps$date)
+
+```
+
+### Mean and Median
+
+
+```{r pressure, echo=FALSE}
+
+daysteps <- group_by(StepInfo, date) %>% summarise(meansteps = mean(steps))
+daymedians <- group_by(StepInfo, date) %>% summarise(median_steps = median(steps, na.rm=T))
+print(daysteps, daymedians)
+```
+
+
+
+### Time Series Plot
+
+
+```{r pressure, echo=FALSE}
+intervalsteps <- group_by(StepInfo, interval) %>% summarise(meansteps = mean(steps, na.rm = T))
+plot(intervalsteps)
+
+```
+
+### Max 5 min interval and imputing
+
+
+
+```{r pressure, echo=FALSE}
+maxInterval <- intervalsteps$interval[intervalsteps$meansteps == max(intervalsteps$meansteps)]
+print(paste("Max Interval: ", maxInterval, sep= ""))
+
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("impute", version = "3.8")
+
+library(impute)
+StepInfoImp <- impute.knn(StepInfo$steps)
+
+
+```
+
+
+### Histogram2 and panel plot
+
+
+```{r pressure, echo=FALSE}
+library(ggplot2)
+daysteps <- group_by(StepInfoImp, date) %>% summarise(steps = sum(steps))
+daysteps <- daysteps[complete.cases(daysteps), ]
+barplot(height = daysteps$steps, names = daysteps$date)
+
+StepInfo$DayofWeek <- weekdays(as.Date(StepInfo$date))
+StepInfo <- StepInfo %>% mutate(Weekend = DayofWeek %in% c("Saturday", "Sunday"))
+
+weekendSteps <- StepInfo[StepInfo$Weekend == TRUE, ]
+weekdaySteps <- StepInfo[StepInfo$Weekend == FALSE, ]
+
+par(mfrow = c(1, 2))
+
+weekdayIntervals <- group_by(weekdaySteps, interval) %>% summarise(meansteps = mean(steps, na.rm = T))
+weekendIntervals <- group_by(weekendSteps, interval) %>% summarise(meansteps = mean(steps, na.rm = T))
+
+plot(weekdayIntervals)
+title(main = "Weekday Intervals")
+
+plot(weekendIntervals)
+title(main = "Weekend Intervals")
+
+
+```
+
+
+
